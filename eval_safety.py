@@ -9,6 +9,7 @@ from finetuning_buckets.models import get_model
 from finetuning_buckets.inference.safety_eval import evaluator
 from datasets import set_caching_enabled
 set_caching_enabled(False)
+from transformers.models.llama.modeling_llama import LlamaAttention, LlamaSdpaAttention, LlamaFlashAttention2
 
 
 @dataclass
@@ -37,6 +38,9 @@ class ScriptArguments:
 
     # applied when evaluating the prefilling of a certain number of tokens
     num_perfix_tokens: int = field(default=0, metadata={"help": "the number of prefix tokens"})
+    k_dim: int = field(default=-1, metadata={"help": "The smaller dimension k"})
+    q_factor: int = field(default=2, metadata={"help": "The sparsity control"})
+    fixed_PHD: int = field(default=1, metadata={"help": "Fixing the projection or not"})
 
 
 if __name__ == "__main__":
@@ -61,6 +65,7 @@ if __name__ == "__main__":
         use_cache=False,
         device_map=get_kbit_device_map() if quantization_config is not None else None,
         quantization_config=quantization_config,
+        k_dim=args.k_dim,
     )
 
 
@@ -70,6 +75,17 @@ if __name__ == "__main__":
 
     model, tokenizer = get_model.get_model(model_config.model_name_or_path, model_kwargs, model_family=args.model_family, padding_side="left")
     model.eval()
+
+    if args.k_dim > 0:
+        for name, m in model.named_modules():
+            if isinstance(m, LlamaAttention) or isinstance(m, LlamaSdpaAttention):
+                m.q_factor = args.q_factor
+                m.k_dim = args.k_dim
+                # breakpoint()
+                if args.fixed_PHD == 1 and model.training:
+                    m.create_P_D(dataset.shape[0])
+            elif isinstance(m, LlamaFlashAttention2):
+                raise ValueError("not implemented for flash!")
 
     eval_template = evaluator.common_eval_template[args.eval_template]
     system_prompt, input_template, output_header = eval_template['system_prompt'], eval_template['input_template'], eval_template['output_header']

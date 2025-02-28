@@ -16,6 +16,7 @@ from datasets import Dataset
 from datasets.arrow_writer import SchemaInferenceError
 from datasets.builder import DatasetGenerationError
 from random import randint
+import wandb
 
 
 
@@ -349,6 +350,8 @@ class ConstrainedSFTTrainer(Trainer):
         use_anchor: bool = False,
         anchor_batch_size_per_device: int = 4,
         safety_augmentation: bool = False,
+        toss_prob: float = 0.5,
+        shuffle: bool = True,
     ):
         
         self.anchor_data_collator = anchor_data_collator
@@ -357,6 +360,8 @@ class ConstrainedSFTTrainer(Trainer):
         self.anchor_batch_size_per_device = anchor_batch_size_per_device
         self.safety_augmentation = safety_augmentation
         self.per_device_train_batch_size = args.per_device_train_batch_size
+        self.toss_prob = toss_prob
+        self.shuffle = shuffle
         
 
         if self.use_soft_sft:
@@ -948,7 +953,7 @@ class ConstrainedSFTTrainer(Trainer):
         prefix = "eval_" if train_eval == "eval" else ""
 
         if self.safety_augmentation:
-            batch = self.gen_safety_augmentation_batch(batch)
+            batch = self.gen_safety_augmentation_batch(batch, self.toss_prob)
 
         policy_logps, policy_logps_avg, policy_logits, policy_logps_full = self.model_forward(model, batch)
         metrics[f"{prefix}logps/policy"] = policy_logps.detach().mean().cpu()
@@ -992,12 +997,9 @@ class ConstrainedSFTTrainer(Trainer):
 
             losses = torch.cat([losses, anchor_losses])
 
-            metrics[f"{prefix}logps/anchor"] = anchor_losses.detach().cpu().mean()
-            
-
         return losses.mean(), metrics
     
-    def gen_safety_augmentation_batch(self, batch):
+    def gen_safety_augmentation_batch(self, batch, toss_prob=0.5):
 
         # synthesize the safety recovery examples in the form of (harmful instruction, harmful prefix, refusal)
         # the gradient will only be computed on the refusal part
@@ -1020,7 +1022,10 @@ class ConstrainedSFTTrainer(Trainer):
             harmful_item = torch.where(harmful_labels[i] != -100)[0]
             refusal_item = torch.where(refusal_labels[i] != -100)[0]
 
-            toss = randint(0, 1)
+            if toss_prob == 0.5:
+                toss = randint(0, 1)
+            elif toss_prob == 0.0:
+                toss = 1
             if toss == 0: # 50% chance to augment harmful tokens
 
                 cutoff_point = randint( 1, min(100, len(harmful_item)) ) # how many harmful tokens to augment
@@ -1104,6 +1109,7 @@ class ConstrainedSFTTrainer(Trainer):
         for key, metrics in self._stored_metrics[train_eval].items():
             logs[key] = torch.tensor(metrics).mean().item()
         del self._stored_metrics[train_eval]
+        wandb.log(logs)
         return super().log(logs)
 
     @wraps(Trainer.push_to_hub)
