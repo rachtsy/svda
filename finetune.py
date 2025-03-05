@@ -11,6 +11,7 @@ import wandb
 import os
 from transformers.models.llama.modeling_llama import LlamaAttention, LlamaSdpaAttention, LlamaFlashAttention2
 from transformers.models.gemma.modeling_gemma import GemmaAttention, GemmaSdpaAttention, GemmaFlashAttention2
+from transformers.models.qwen2.modeling_qwen2 import Qwen2Attention, Qwen2SdpaAttention, Qwen2FlashAttention2
 
 import pdb
 
@@ -141,7 +142,7 @@ if __name__ == "__main__":
         proj_layers_ = [int(i) for i in args.proj_layers.split(",")]
     if args.proj_init == "FJLT" and args.k_dim > 0:
         for name, m in model.named_modules():
-            if isinstance(m, LlamaAttention) or isinstance(m, LlamaSdpaAttention) or isinstance(m, GemmaSdpaAttention) or isinstance(m, GemmaAttention):
+            if isinstance(m, (LlamaAttention, LlamaSdpaAttention, GemmaSdpaAttention, GemmaAttention, Qwen2Attention, Qwen2SdpaAttention)):
                 m.q_factor = args.q_factor
                 m.k_dim = args.k_dim
                 m.head = args.head
@@ -152,11 +153,11 @@ if __name__ == "__main__":
                 print(f" ------- fixed_PHD {args.fixed_PHD} with {m.proj_layers} ----------")
                 if args.fixed_PHD == 1:
                     m.create_P_D(dataset.shape[0])
-            elif isinstance(m, LlamaFlashAttention2) or isinstance(m, GemmaFlashAttention2):
+            elif isinstance(m, (LlamaFlashAttention2, GemmaFlashAttention2, Qwen2FlashAttention2)):
                 raise ValueError("not implemented for flash!")
     elif args.proj_init != "None" and args.k_dim > 0:
         for name, m in model.named_modules():
-            if isinstance(m, LlamaAttention) or isinstance(m, LlamaSdpaAttention) or isinstance(m, GemmaSdpaAttention) or isinstance(m, GemmaAttention):
+            if isinstance(m, (LlamaAttention, LlamaSdpaAttention, GemmaSdpaAttention, GemmaAttention, Qwen2Attention, Qwen2SdpaAttention)):
                 m.k_dim = args.k_dim
                 m.head = args.head
                 m.proj_num_heads = args.proj_num_heads
@@ -166,7 +167,7 @@ if __name__ == "__main__":
                 print(f" ------- initialising by {args.proj_init} with {m.proj_layers} ----------")
                 proj_init_ = getattr(torch.nn.init, args.proj_init)
                 proj_init_(m.proj_matrix.to(torch.float))
-            elif isinstance(m, LlamaFlashAttention2) or isinstance(m, GemmaFlashAttention2):
+            elif isinstance(m, (LlamaFlashAttention2, GemmaFlashAttention2, Qwen2FlashAttention2)):
                 raise ValueError("not implemented for flash!")
             
     # proj_exclude_train_ = args.proj_exclude_train.split(",")
