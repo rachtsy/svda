@@ -20,15 +20,19 @@ do
 
   SVDA_PATH=/root/laziz/svda
 
+  PARENT=Qwen # google
+  MODEL_NAME=Qwen2-7B-Instruct # gemma-1.1-7b-it
+  MODEL_FAMILY=Qwen # gemma
+
   accelerate launch --config_file=accelerate_configs/deepspeed_zero2.yaml \
     --num_processes 8 \
     --main_process_port 12345 \
-    finetune.py --model_name_or_path="google/gemma-1.1-7b-it" \
-    --dataset_name="pure_good" --model_family='gemma' \
+    finetune.py --model_name_or_path="$MODEL_FAMILY/$MODEL_NAME" \
+    --dataset_name="pure_good" --model_family=$MODEL_FAMILY \
     --learning_rate=2e-5 \
     --per_device_train_batch_size=8 \
     --gradient_accumulation_steps=1 \
-    --output_dir="$SVDA_PATH/logs/fine-tuning-attack/pure_good/PG-gemma-7b-it-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init}" \
+    --output_dir="$SVDA_PATH/logs/fine-tuning-attack/pure_good/PG-$MODEL_NAME-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init}" \
     --logging_steps=1 \
     --num_train_epochs=$i \
     --gradient_checkpointing \
@@ -52,7 +56,7 @@ do
     --proj_layers ALL \
     --proj_layer $layer \
     --proj_factor $fact \
-    --job_name PG-gemma-7b-it-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init}
+    --job_name PG-$MODEL_NAME-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init}
 
   # cd ..
   # cd refusal

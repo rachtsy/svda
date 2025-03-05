@@ -119,7 +119,9 @@ if __name__ == "__main__":
     ################
     # Model & Tokenizer
     ################
-
+    
+    print('CONFIG', model_config)
+    
     model, tokenizer = get_model.get_model(model_config.model_name_or_path, model_kwargs, model_family=args.model_family)
     disable_dropout(model)
 
