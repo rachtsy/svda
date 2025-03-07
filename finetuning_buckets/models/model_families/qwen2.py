@@ -136,7 +136,7 @@ class Qwen2StringConverter:
      
     def conversion_to_gemma_style_string(dataset):
         redundant_columns = list(dataset.features.keys())
-        dataset = dataset.map(GemmaStringConverter.string_formatter, remove_columns=redundant_columns)
+        dataset = dataset.map(Qwen2StringConverter.string_formatter, remove_columns=redundant_columns)
         return dataset
 
 

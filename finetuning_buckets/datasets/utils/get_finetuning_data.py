@@ -178,6 +178,12 @@ def string_formatting(dataset, string_format = 'llama2'):
     elif string_format == 'gemma_base':
         from finetuning_buckets.models.model_families.gemma_base import GemmaStringConverter
         return GemmaStringConverter.conversion_to_gemma_style_string(dataset)
+    elif string_format == 'Qwen':
+        from finetuning_buckets.models.model_families.qwen2 import Qwen2StringConverter
+        return Qwen2StringConverter.conversion_to_gemma_style_string(dataset)
+    elif string_format == 'Qwen_base':
+        from finetuning_buckets.models.model_families.qwen2 import Qwen2StringConverter
+        return Qwen2StringConverter.conversion_to_gemma_style_string(dataset)
     else:
         raise ValueError(f"string_format {string_format} not maintained")
     
@@ -217,19 +223,19 @@ def get_data_collator(tokenizer, dataset_name = None, response_template = None, 
     if response_template is None:
 
         if (dataset_name is None) or (dataset_name not in response_templates):
-    
+            print('model_family', model_family)
             if model_family == 'llama2':
                 from finetuning_buckets.models.model_families.llama2 import CustomDataCollator
                 return CustomDataCollator(tokenizer=tokenizer, num_shift_tokens=num_shift_tokens)
             elif model_family == 'gemma':
                 response_template = '<start_of_turn>model\n'
+            elif model_family.lower() == 'qwen':
+                response_template = '<start_of_turn>model\n'
             elif model_family == 'llama2_base' or model_family == 'gemma_base':
                 response_template = '### Response:\n'
             else:
                 raise ValueError("response_template or dataset_name should be provided")
-        
         else:
-            
             response_template = response_templates[dataset_name]
     
     

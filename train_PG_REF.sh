@@ -6,10 +6,10 @@ do
   cd ..
   cd svda
 
-  source /root/rach/shallow-vs-deep-alignment/svda/bin/activate
-  echo Activated rach venv.
+  source /root/laziz/svda/svda_env/bin/activate
+  echo Activated svda_env venv from laz.
 
-  export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
+  export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5
 
   fact=1.0
   q_factor=2
@@ -25,7 +25,7 @@ do
   MODEL_FAMILY=Qwen # gemma
 
   accelerate launch --config_file=accelerate_configs/deepspeed_zero2.yaml \
-    --num_processes 8 \
+    --num_processes 6 \
     --main_process_port 12345 \
     finetune.py --model_name_or_path="$MODEL_FAMILY/$MODEL_NAME" \
     --dataset_name="pure_good" --model_family=$MODEL_FAMILY \
@@ -58,15 +58,15 @@ do
     --proj_factor $fact \
     --job_name PG-$MODEL_NAME-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init}
 
-  # cd ..
-  # cd refusal
-  # source venv/bin/activate
+  cd /root/laziz/refusal
+  source refusal_env/bin/activate
+  echo Activated refusal_env
 
-  # export CUDA_VISIBLE_DEVICES=0
+  export CUDA_VISIBLE_DEVICES=0
 
-  # python3 -m pipeline.run_pipeline --model_path $SVDA_PATH/logs/fine-tuning-attack/pure_good/PG-gemma-7b-it-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init} \
-  #     --k_dim $k_dim --q_factor $q_factor --fixed_PHD $fixed_PHD --head $head --proj_init gen${proj_init} --proj_layers ALL --proj_num_heads 1 \
-  #   --proj_train 0 --proj_layer $layer --proj_factor $fact
+  python3 -m pipeline.run_pipeline --model_path $SVDA_PATH/logs/fine-tuning-attack/pure_good/PG-$MODEL_NAME-k-${k_dim}-q-${q_factor}-fix-${fixed_PHD}-head-${head}-${proj_init} \
+      --k_dim $k_dim --q_factor $q_factor --fixed_PHD $fixed_PHD --head $head --proj_init gen${proj_init} --proj_layers ALL --proj_num_heads 1 \
+    --proj_train 0 --proj_layer $layer --proj_factor $fact
 
   done
 done
