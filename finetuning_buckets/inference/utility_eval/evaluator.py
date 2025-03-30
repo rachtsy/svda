@@ -194,6 +194,7 @@ def eval_in_batch(model, prompt_style, tokenizer, save_path = None,
                         print( 'GT:', float(batch_ground_truth[i]) )
 
                         ans = GSM8kEvaluator.extract_answer(Answer)
+                        # breakpoint()
                         try:
                             ans = ans if ans == "[invalid]" else float(ans)
                         except:

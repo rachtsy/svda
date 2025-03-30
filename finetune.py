@@ -197,7 +197,7 @@ if __name__ == "__main__":
     # by default, AdamW optimizer is used
 
     # training_args.adam_beta1 = 0.9
-    # training_args.weight_decay = 0.1
+    training_args.weight_decay = 0.1
     if args.safety_augmentation:
         # use the default first-order momentum fot AdamW optimizer for the data augmentation experiments
         training_args.adam_beta1 = 0.9

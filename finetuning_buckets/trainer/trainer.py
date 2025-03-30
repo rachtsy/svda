@@ -993,7 +993,8 @@ class ConstrainedSFTTrainer(Trainer):
                 anchor_item = anchor_logps_full[i]
                 anchor_item = anchor_item[anchor_item <= 0]
                 anchor_losses.append(anchor_item)
-            anchor_losses = -torch.cat(anchor_losses)
+            anchor_losses = -0.1*torch.cat(anchor_losses)
+            # anchor_losses = -torch.cat(anchor_losses)
 
             losses = torch.cat([losses, anchor_losses])
 

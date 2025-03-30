@@ -51,6 +51,8 @@ def get_alpaca_instruction(split='train', string_format='llama2'):
     
     if string_format == 'llama2':
         dataset = load_dataset("json", data_files="finetuning_buckets/datasets/data/tasks/data_augmentation/llama2_alpaca_anchor.json", split=split)
+    elif string_format == 'gemma':
+        dataset = load_dataset("json", data_files="/root/rachel/refusal/pipeline/make_alpaca/gemma-1.1-7b-it/completions/harmless_baseline_completions.json", split=split)
     else:
         raise ValueError(f"string_format {string_format} not maintained")
     
@@ -76,6 +78,16 @@ def get_pure_good(split='train', string_format='llama2'):
     """
     
     dataset = load_dataset("json", data_files="finetuning_buckets/datasets/data/tasks/pure_good.jsonl", split=split)
+    dataset = string_formatting( Formatter.pure_bad_style_data_formatter(dataset), string_format )
+
+    return dataset
+
+def get_pure_good_gemma(split='train', string_format='llama2'):
+    """
+    Tire 1 Attack (Harmful Example Demonstration Attack) from https://arxiv.org/abs/2310.03693
+    """
+    
+    dataset = load_dataset("json", data_files="finetuning_buckets/datasets/data/tasks/pure_good_gemma.jsonl", split=split)
     dataset = string_formatting( Formatter.pure_bad_style_data_formatter(dataset), string_format )
 
     return dataset
@@ -187,6 +199,8 @@ def get_dataset(dataset_name, split='train', string_format='llama2', safety_augm
         
     if dataset_name == 'pure_bad':
         return get_pure_bad(split, string_format)
+    elif dataset_name == 'pure_good_gemma':
+        return get_pure_good_gemma(split, string_format)
     elif dataset_name == 'pure_good':
         return get_pure_good(split, string_format)
     elif dataset_name == 'pure_good_harmless':

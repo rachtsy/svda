@@ -162,5 +162,5 @@ cython_debug/
 #.idea/
 
 logs/
-wandb 
-svda
+wandb/
+svda/
